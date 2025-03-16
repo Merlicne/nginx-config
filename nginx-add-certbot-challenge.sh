@@ -28,7 +28,6 @@ server {
 
     location /.well-known/acme-challenge/ {
         root ${CHALLENGE_DIR};
-        try_files \$uri =404;
     }
 }
 EOM

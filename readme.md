@@ -47,16 +47,9 @@ And I have a script to issue a certificate for a domain. <br/>
 
 ## Renewal
 
-To do a dry run of cert renewal:
+To renew the certificate, we need to run the renewal script. <br/>
+`./cert-renew.sh [domain]` <br/>
 
 ```
-certbot renew --dry-run
+./cert-renew.sh dev.webapp.com
 ```
-
-Reload our NGINX web server if the certs change:
-
-```
-docker exec -it nginx sh -c "nginx -s reload"
-```
-
-Checkout the Certbot [docs](https://certbot.eff.org/instructions) for more details

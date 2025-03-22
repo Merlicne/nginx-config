@@ -13,11 +13,9 @@ fi
 
 docker build -t certbot .
 
-# Get the Nginx user's UID from the image
-NGINX_UID=$(docker run --rm nginx:alpine id -u nginx)
 
 docker run -it --rm --name certbot \
-    --user $NGINX_UID:$NGINX_UID \
+    --network $NETWORK_NAME \
     -v ${PWD}:/letsencrypt \
     -v ${PWD}/certs:/etc/letsencrypt \
     certbot certbot certonly --webroot --webroot-path=/letsencrypt -d $1

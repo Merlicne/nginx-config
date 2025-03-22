@@ -5,12 +5,14 @@ services:
     image: nginx:alpine
     container_name: nginx
     restart: unless-stopped
-    network_mode: "host"
+    network_mode: nginx-network
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./:/letsencrypt
       - ./certs:/etc/letsencrypt
-    # Ports are not needed with host network mode
 
   certbot:
     build: .

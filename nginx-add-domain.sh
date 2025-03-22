@@ -4,6 +4,7 @@
 # Example: ./nginx-add-domain dev.webdev.com localhost:8080
 #
 # This script adds a new server block to the nginx configuration under the "http" block.
+# It creates HTTP configuration with automatic redirection to HTTPS.
 # It creates a backup of your original nginx.conf before modifying.
 #
 # WARNING: Automatic modifications can be error-prone.
@@ -19,18 +20,27 @@ DOMAIN=$1
 DEST=$2
 
 # Step 2: Define the server block snippet.
-# By default, we use HTTP. If you need HTTPS, you'll have to adjust the snippet.
-PROTOCOL="http"
-
+# This creates an HTTP server that redirects to HTTPS
 read -r -d '' SNIPPET << EOM
+# HTTP server for ${DOMAIN}
 server {
     listen 80;
     server_name ${DOMAIN};
 
+    # Security headers
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header Referrer-Policy strict-origin-when-cross-origin;
+
+    # Let's Encrypt challenge
+    location /.well-known/acme-challenge/ {
+        root /letsencrypt/;
+    }
+
+    # Redirect to HTTPS
     location / {
-        proxy_pass ${PROTOCOL}://${DEST};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
+        return 301 https://\$host\$request_uri;
     }
 }
 EOM
@@ -39,7 +49,7 @@ EOM
 NGINX_CONF="./nginx.conf"
 
 echo "Backing up ${NGINX_CONF} to ${NGINX_CONF}.bak"
-sudo cp ${NGINX_CONF} ${NGINX_CONF}.bak
+cp ${NGINX_CONF} ${NGINX_CONF}.bak
 
 echo "Inserting server block for domain ${DOMAIN} into ${NGINX_CONF}..."
 TMPFILE=$(mktemp)
@@ -68,8 +78,9 @@ in_http {
 ' ${NGINX_CONF} > ${TMPFILE}
 
 # Step 5: Replace the original nginx.conf with the modified file
-sudo mv ${TMPFILE} ${NGINX_CONF}
+mv ${TMPFILE} ${NGINX_CONF}
 
 echo "Server block added to ${NGINX_CONF}."
-echo "Please test your configuration with: sudo nginx -t"
-echo "Then reload nginx with: sudo systemctl reload nginx"
+echo "Next, run nginx-add-domain-https.sh to add the HTTPS configuration."
+echo "Please test your configuration with: nginx -t"
+echo "Then reload nginx with: systemctl reload nginx"
